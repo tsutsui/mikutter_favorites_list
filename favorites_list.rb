@@ -1,29 +1,61 @@
 # -*- coding: utf-8 -*-
 
-Plugin.create(:favorites_list) do
+favorites_list_retrieve_queue_user = Hash.new
 
-  UserConfig[:favorites_list_retrieve_count_own_favorites] ||= 20
+Plugin.create(:favorites_list) do
+  UserConfig[:favorites_list_retrieve_count] ||= 20
 
   module MikuTwitter::APIShortcuts
     defshortcut :favorites_list, 'favorites/list', :messages
   end
 
-  mix_tl_tab = tab :own_fav_tl, "お気に入り" do
-    set_icon Skin.get("unfav.png")
-    timeline :own_fav_tl
-  end
-
   settings('お気に入り') do
     settings('一度に取得するつぶやきの件数(1-200)') do
-      adjustment('自分のお気に入り', :favorites_list_retrieve_count_own_favorites, 1, 200)
+      adjustment('お気に入り', :favorites_list_retrieve_count, 1, 200)
     end
   end
 
-  on_boot do |service|
-    user = service.user_obj
+  tab :own_favorites_list, "お気に入り" do
+    set_icon Skin.get("unfav.png")
+    timeline :own_favorites_list
+  end
+
+  profiletab :favorites_list, "お気に入り" do
+    set_icon Skin.get("unfav.png")
+    i_timeline = timeline(nil)
+    favorites_list_retrieve_queue_user[i_timeline.slug] = user
+  end
+
+  on_retrieve_favorites_list do |service, user, timeline_slugs|
+    timeline_slugs = [timeline_slugs] if not timeline_slugs.is_a? Array
     service.favorites_list(user_id: user[:id], count: [UserConfig[:favorites_list_retrieve_count_own_favorites], 200].min).next{ |tl|
-      timeline(:own_fav_tl) << tl
+      timeline_slugs.each { |slug|
+        timeline(slug) << tl
+      }
     }.terminate("@#{user[:idname]} のお気に入りが取得できませんでした。")
+  end
+
+  on_boot do |service|
+    favorites_list_retrieve_queue_user[:own_favorites_list] = service.user_obj
+  end
+
+  on_favorite do |service, user, message|
+    if Service.primary.user_obj == user
+      timeline(:own_favorites_list) << message
+    end
+  end
+
+  on_gui_child_activated do |i_parent, i_child, by_toolkit|
+    slug = i_child.slug
+    if favorites_list_retrieve_queue_user.has_key?(slug)
+      user = favorites_list_retrieve_queue_user[slug]
+      if Service.primary.user_obj == user and slug != :own_favorites_list
+        Plugin.call(:retrieve_favorites_list, Service.primary, user, [:own_favorites_list, slug])
+      else
+        Plugin.call(:retrieve_favorites_list, Service.primary, user, slug)
+      end
+      favorites_list_retrieve_queue_user.delete(slug)
+    end
   end
 
 end
