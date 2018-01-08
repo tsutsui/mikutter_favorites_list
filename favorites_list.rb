@@ -29,7 +29,7 @@ Plugin.create(:favorites_list) do
   on_retrieve_favorites_list do |service, screen_name, timeline_slugs, options = {}|
     timeline_slugs = [timeline_slugs] if not timeline_slugs.is_a? Array
     options[:screen_name] = screen_name
-    service.primary.favorites_list(options).next{ |tl|
+    service.favorites_list(options).next{ |tl|
       timeline_slugs.each { |slug|
         timeline(slug) << tl
       }
@@ -51,9 +51,9 @@ Plugin.create(:favorites_list) do
     if favorites_list_retrieve_queue_user.has_key?(slug)
       user = favorites_list_retrieve_queue_user[slug]
       if Service.primary.user_obj == user and slug != :own_favorites_list
-        Plugin.call(:retrieve_favorites_list, Service, user[:idname], [:own_favorites_list, slug], {count: [UserConfig[:favorites_list_retrieve_count], 200].min})
+        Plugin.call(:retrieve_favorites_list, Service.primary, user[:idname], [:own_favorites_list, slug], {count: [UserConfig[:favorites_list_retrieve_count], 200].min})
       else
-        Plugin.call(:retrieve_favorites_list, Service, user[:idname], slug, {count: [UserConfig[:favorites_list_retrieve_count], 200].min})
+        Plugin.call(:retrieve_favorites_list, Service.primary, user[:idname], slug, {count: [UserConfig[:favorites_list_retrieve_count], 200].min})
       end
       favorites_list_retrieve_queue_user.delete(slug)
     end
