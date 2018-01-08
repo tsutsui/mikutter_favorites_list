@@ -23,7 +23,7 @@ Plugin.create(:favorites_list) do
   profiletab :favorites_list, "お気に入り" do
     set_icon Skin["unfav.png"]
     i_timeline = timeline(nil)
-    favorites_list_retrieve_queue_user[i_timeline.slug] = user
+    favorites_list_retrieve_queue_user[i_timeline.slug] = model
   end
 
   on_retrieve_favorites_list do |service, screen_name, timeline_slugs, options = {}|
