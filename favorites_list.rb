@@ -16,12 +16,12 @@ Plugin.create(:favorites_list) do
   end
 
   tab :own_favorites_list, "お気に入り" do
-    set_icon Skin.get("unfav.png")
+    set_icon Skin["unfav.png"]
     timeline :own_favorites_list
   end
 
   profiletab :favorites_list, "お気に入り" do
-    set_icon Skin.get("unfav.png")
+    set_icon Skin["unfav.png"]
     i_timeline = timeline(nil)
     favorites_list_retrieve_queue_user[i_timeline.slug] = user
   end
