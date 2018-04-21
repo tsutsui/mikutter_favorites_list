@@ -51,9 +51,9 @@ Plugin.create(:favorites_list) do
     if favorites_list_retrieve_queue_user.has_key?(slug)
       user = favorites_list_retrieve_queue_user[slug]
       if Service.primary.user_obj == user and slug != :own_favorites_list
-        Plugin.call(:retrieve_favorites_list, Service.primary, user[:idname], [:own_favorites_list, slug], {count: [UserConfig[:favorites_list_retrieve_count], 200].min})
+        Plugin.call(:retrieve_favorites_list, Service.primary, user[:idname], [:own_favorites_list, slug], {count: [UserConfig[:favorites_list_retrieve_count], 200].min}, tweet_mode:'extended'.freeze)
       else
-        Plugin.call(:retrieve_favorites_list, Service.primary, user[:idname], slug, {count: [UserConfig[:favorites_list_retrieve_count], 200].min})
+        Plugin.call(:retrieve_favorites_list, Service.primary, user[:idname], slug, {count: [UserConfig[:favorites_list_retrieve_count], 200].min}, tweet_mode:'extended'.freeze)
       end
       favorites_list_retrieve_queue_user.delete(slug)
     end
