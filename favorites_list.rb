@@ -41,7 +41,12 @@ Plugin.create(:favorites_list) do
   end
 
   on_favorite do |service, user, message|
-    if Service.primary.user_obj == user
+    twitter = Enumerator.new{|y|
+      Plugin.filtering(:worlds, y)
+    }.find{|world|
+      world.class.slug == :twitter
+    }
+    if twitter.user_obj == user
       timeline(:own_favorites_list) << message
     end
   end
@@ -49,11 +54,22 @@ Plugin.create(:favorites_list) do
   on_gui_child_activated do |i_parent, i_child, by_toolkit|
     slug = i_child.slug
     if favorites_list_retrieve_queue_user.has_key?(slug)
-      user = favorites_list_retrieve_queue_user[slug]
-      if Service.primary.user_obj == user and slug != :own_favorites_list
-        Plugin.call(:retrieve_favorites_list, Service.primary, user[:idname], [:own_favorites_list, slug], {count: [UserConfig[:favorites_list_retrieve_count], 200].min}, tweet_mode:'extended'.freeze)
+      twitter = Enumerator.new{|y|
+        Plugin.filtering(:worlds, y)
+      }.find{|world|
+        world.class.slug == :twitter
+      }
+      current_world, = Plugin.filtering(:world_current, nil)
+      if slug == :own_favorites_list and current_world.class.slug != :twitter
+        user = twitter.user_obj
       else
-        Plugin.call(:retrieve_favorites_list, Service.primary, user[:idname], slug, {count: [UserConfig[:favorites_list_retrieve_count], 200].min}, tweet_mode:'extended'.freeze)
+        user = favorites_list_retrieve_queue_user[slug]
+      end
+
+      if twitter.user_obj == user and slug != :own_favorites_list
+        Plugin.call(:retrieve_favorites_list, twitter, user[:idname], [:own_favorites_list, slug], {count: [UserConfig[:favorites_list_retrieve_count], 200].min}, tweet_mode: 'extended'.freeze)
+      else
+        Plugin.call(:retrieve_favorites_list, twitter, user[:idname], slug, {count: [UserConfig[:favorites_list_retrieve_count], 200].min}, tweet_mode: 'extended'.freeze)
       end
       favorites_list_retrieve_queue_user.delete(slug)
     end
